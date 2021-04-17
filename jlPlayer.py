@@ -4,13 +4,14 @@ from tkinter import filedialog
 import threading
 
 counter = 0
+counterImg = 0
 
 
 class MusicPlayer:
 
     def __init__(self, window):
         global frame
-        window.title('JL Player')
+        window.title('JL Player. By Thunder')
         window.geometry()
         window.config(bg="blue")
 
@@ -83,17 +84,30 @@ class MusicPlayer:
         self.playing_state = False
 
     def equalizer(self):
+        self.equa = ""
+
+
+        self.pantalla = Label(self.capa0, image=self.equa, height=100)
+        self.pantalla.grid(row=0, columnspan=12)
 
         a = "D:/Proyectos/Python/MusicPlayer/imagenes/gif/a.gif"
         b = "D:/Proyectos/Python/MusicPlayer/imagenes/gif/b.gif"
         c = "D:/Proyectos/Python/MusicPlayer/imagenes/gif/c.gif"
         d = "D:/Proyectos/Python/MusicPlayer/imagenes/gif/d.gif"
-        self.frame = (a, b, c, d)
 
-        self.equa = PhotoImage(file=self.frame[1])
+        self.frame = (0, a, b, c, d, a, c, d, a, d, b)
 
-        self.pantalla = Label(self.capa0, image=self.equa, height=100)
-        self.pantalla.grid(row=0, columnspan=12)
+        def count():
+            global counterImg
+            counterImg += 1
+            self.equa = PhotoImage(file=self.frame[counterImg])
+            self.pantalla.config(image=self.equa)
+            self.pantalla.after(80, count)
+            if counterImg > 9:
+                counterImg = 0
+
+
+        count()
 
     def add_song(self):
 
@@ -117,7 +131,7 @@ class MusicPlayer:
         self.music_file = filedialog.askopenfilename()
 
     def play(self):
-        global counter
+        global counter, counterImg
         mixer.init()
         song = self.song_box.get(ACTIVE)
         self.songString = "D:/Proyectos/Python/MusicPlayer/musica/"
@@ -125,7 +139,7 @@ class MusicPlayer:
         # mixer.music.load(self.music_file)
         mixer.music.play(loops=0)
         # ver el temporizador
-        counter = 0
+        counter = counterImg = 0
         self.play_time(self.status_bar)
         self.equalizer()
 
@@ -171,11 +185,12 @@ class MusicPlayer:
         counter = 0
 
     def stop(self):
-        global counter
+        global counter, counterImg
         global frames
         mixer.music.stop()
         self.status_bar.config(text="")
         counter = threading.Lock
+        counterImg = threading.Lock
 
     def delete_song(self):
         self.song_box.delete(ANCHOR)

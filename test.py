@@ -14,7 +14,7 @@ def counter_label(label):
     def count():
         global counter
         counter += 1
-        equa = tk.PhotoImage(file=frame)
+        equa = PhotoImage(file=frame)
         label.config(image=equa)
         label.after(1000, count)
         print(counter)
