@@ -12,6 +12,7 @@ class MusicPlayer:
     def __init__(self, window):
         global frame
         window.title('JL Player. By Thunder')
+        window.iconbitmap("auricular.ico")
         window.geometry()
         window.config(bg="blue")
 
