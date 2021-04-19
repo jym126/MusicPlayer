@@ -1,3 +1,4 @@
+import time
 from tkinter import *
 from pygame import mixer
 from tkinter import filedialog
@@ -87,7 +88,6 @@ class MusicPlayer:
     def equalizer(self):
         self.equa = ""
 
-
         self.pantalla = Label(self.capa0, image=self.equa, height=100)
         self.pantalla.grid(row=0, columnspan=12)
 
@@ -106,7 +106,6 @@ class MusicPlayer:
             self.pantalla.after(80, count)
             if counterImg > 9:
                 counterImg = 0
-
 
         count()
 
@@ -145,12 +144,19 @@ class MusicPlayer:
         self.equalizer()
 
     def pause(self):
+        global counterImg
+        a = self.status_bar
         if not self.playing_state:
             mixer.music.pause()
             self.playing_state = True
+            counterImg = threading.Lock
+
         else:
             mixer.music.unpause()
             self.playing_state = False
+            self.play_time(a)
+            counterImg = not threading.Lock
+            self.equalizer()
 
     def volume(self, x):
         mixer.music.set_volume(self.Vol.get())
@@ -204,11 +210,11 @@ class MusicPlayer:
     # Estado y tiempo
     def play_time(self, label):
         def count():
-            global counter
-            counter += 1
-            label.config(text="Time lapse: " + str(counter))
-            label.after(1000, count)
-
+            if self.playing_state == False:
+                global counter
+                counter += 1
+                label.config(text="Elapse time: " + str(counter))
+                label.after(1000, count)
         count()
 
 
