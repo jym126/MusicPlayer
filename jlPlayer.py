@@ -1,10 +1,11 @@
-import time
 from tkinter import *
 from pygame import mixer
 from tkinter import filedialog
 import threading
+import tkinter.ttk as ttk
+from mutagen.mp3 import MP3  # need to be installed with pip
 
-counter = 0
+myCounter = 0
 counterImg = 0
 
 
@@ -48,6 +49,7 @@ class MusicPlayer:
         self.Back = Button(capa1, text='Back', bd=1, image=self.backimage, font=('Times', 10), command=self.back)
         self.Back.grid(row=1, column=2)
 
+        #Slider volumen
         capa2 = LabelFrame(self.capa0)
         capa2.grid(row=1, column=7)
         capa2.config()
@@ -82,9 +84,15 @@ class MusicPlayer:
         remove_song_menu.add_command(label="Elimina la canción seleccionada", command=self.delete_song)
         remove_song_menu.add_command(label="Elimina toda la lista", command=self.delete_all_songs)
 
+        # Music position slider
+        self.my_slider = ttk.Scale(self.capa0, from_=0, to=100, orient=HORIZONTAL, value=0, length=250,
+                                   command=self.slide)
+        self.my_slider.grid(row=2, column=0, columnspan=8)
+
         self.music_file = False
         self.playing_state = False
 
+    # Equalizador grafico
     def equalizer(self):
         self.equa = ""
 
@@ -131,16 +139,23 @@ class MusicPlayer:
         self.music_file = filedialog.askopenfilename()
 
     def play(self):
-        global counter, counterImg
+        global myCounter, counterImg
         mixer.init()
         song = self.song_box.get(ACTIVE)
         self.songString = "D:/Proyectos/Python/MusicPlayer/musica/"
         mixer.music.load(self.songString + song)
         # mixer.music.load(self.music_file)
         mixer.music.play(loops=0)
+        self.Vol.set(.2)
         # ver el temporizador
-        counter = counterImg = 0
+        myCounter = counterImg = 0
+
         self.play_time(self.status_bar)
+
+        # update slider position
+        self.slider_position = self.song_length
+        self.my_slider.config(to=self.slider_position, value=0)
+
         self.equalizer()
 
     def pause(self):
@@ -162,41 +177,51 @@ class MusicPlayer:
         mixer.music.set_volume(self.Vol.get())
 
     def next(self):
-        global counter
+        global myCounter
         next_one = self.song_box.curselection()
         next_one = next_one[0] + 1
         song = self.song_box.get(next_one)
         song = song.replace(self.songString, "")
-        mixer.music.load(self.songString + song)
+        if song:
+            mixer.music.load(self.songString + song)
+        else:
+            self.stop()
+
+        # get song legth with mutagen
+        song_mut = MP3(self.songString + song)
+        self.song_length = round(song_mut.info.length)
+        self.my_slider.config(to=self.song_length)
+
         mixer.music.play(loops=0)
 
         self.song_box.select_clear(0, END)
         self.song_box.activate(next_one)
         self.song_box.select_set(next_one, last=None)
 
-        counter = 0
+        myCounter = 0
 
     def back(self):
-        global counter
+        global myCounter
         next_one = self.song_box.curselection()
         next_one = next_one[0] - 1
         song = self.song_box.get(next_one)
         song = song.replace(self.songString, "")
         mixer.music.load(self.songString + song)
+
         mixer.music.play(loops=0)
 
         self.song_box.select_clear(0, END)
         self.song_box.activate(next_one)
         self.song_box.select_set(next_one, last=None)
 
-        counter = 0
+        myCounter = 0
 
     def stop(self):
-        global counter, counterImg
+        global myCounter, counterImg
         global frames
         mixer.music.stop()
         self.status_bar.config(text="")
-        counter = threading.Lock
+        myCounter = threading.Lock
         counterImg = threading.Lock
 
     def delete_song(self):
@@ -209,13 +234,38 @@ class MusicPlayer:
 
     # Estado y tiempo
     def play_time(self, label):
+        # get current song length
+        current_song = self.song_box.curselection()
+        song = self.song_box.get(current_song)
+        # get song legth with mutagen
+        song_mut = MP3(self.songString + song)
+        self.song_length = round(song_mut.info.length)
+
         def count():
+            self.my_slider.config(value=int(self.song_length))
             if self.playing_state == False:
-                global counter
-                counter += 1
-                label.config(text="Elapse time: " + str(counter))
+                global myCounter
+                myCounter += 1
+                label.config(text="Elapse time: " + str(myCounter) + " of " + str(self.song_length))
                 label.after(1000, count)
+                if myCounter == self.song_length:
+                    self.next()
+
+                self.my_slider.config(value=myCounter)
+
         count()
+
+    # Create slider function
+    def slide(self, x):
+        global myCounter
+        # self.slider_label.config(text=f'{int(self.my_slider.get())} of {self.song_length}')
+        song = self.song_box.get(ACTIVE)
+        self.songString = "D:/Proyectos/Python/MusicPlayer/musica/"
+
+        mixer.music.load(self.songString + song)
+        mixer.music.play(loops=0, start=int(self.my_slider.get()))
+        myCounter = int(self.my_slider.get())
+        self.my_slider.config(value=int(self.my_slider.get()))
 
 
 root = Tk()
